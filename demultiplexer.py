@@ -25,22 +25,10 @@ def main():
                 print("Sequence len: {}".format(len(line)))
                 print("-- Leading strand")
                 f_dist_s = check_barcode(read_start, primer_f)
-                if f_dist_s>=5:
-                    print("- Reverse-comp")
-                    check_barcode(read_start, rev_comp(primer_f))
                 f_dist_e = check_barcode(read_end, primer_r)
-                if f_dist_e>=5:
-                    print("- Reverse-comp")
-                    check_barcode(read_end, rev_comp(primer_r))
                 print("-- Lagging strand")
                 r_dist_s = check_barcode(read_start, rev_comp(primer_r))
-                if r_dist_s>=5:
-                    print("- Reverse-comp")
-                    check_barcode(read_start, primer_r)
                 r_dist_e = check_barcode(read_end, rev_comp(primer_f))
-                if r_dist_e>=5:
-                    print("- Reverse-comp")
-                    check_barcode(read_end, primer_f)
                 read_next_line = False
 
 
