@@ -12,6 +12,7 @@ def main():
     args = get_arguments()
     primer_f = "TTGATTACGTCCCTGCCCTTT"
     primer_r = "CCTTAGTAACGGCGAGTGAAA" #reverse compliment of reverse primer
+    matches = {'Leading':{'Both':0, 'Start':0, 'End':0}, 'Lagging': {'Both':0, 'Start':0, 'End':0}, 'None': 0}
     with open(args.input) as file:
         read_next_line = False
         for line in file:
@@ -29,7 +30,22 @@ def main():
                 print("-- Lagging strand")
                 r_dist_s = check_barcode(read_start, rev_comp(primer_r))
                 r_dist_e = check_barcode(read_end, rev_comp(primer_f))
+                if f_dist_s<=6 and f_dist_e<=6:
+                    matches['Leading']['Both'] +=1
+                elif r_dist_s<=6 and r_dist_e<=6:
+                    matches['Lagging']['Both'] +=1
+                elif f_dist_s<=6 and f_dist_e>6:
+                    matches['Leading']['Start'] +=1
+                elif f_dist_s>6 and f_dist_e<=6:
+                    matches['Leading']['End'] +=1
+                elif r_dist_s<=6 and r_dist_e>6:
+                    matches['Lagging']['Start'] +=1
+                elif r_dist_s>6 and r_dist_e<=6:
+                    matches['Lagging']['End'] +=1
+                else:
+                    matches['None'] +=1
                 read_next_line = False
+    print(matches)
 
 
 def get_arguments():
