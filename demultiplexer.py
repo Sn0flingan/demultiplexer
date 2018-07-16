@@ -23,7 +23,7 @@ def main():
                 #Forward strand
                 print("--- Read ---")
                 print("Sequence len: {}".format(len(line)))
-                print("-- Forward strand")
+                print("-- Leading strand")
                 f_dist_s = check_barcode(read_start, primer_f)
                 if f_dist_s>=5:
                     print("- Reverse-comp")
@@ -32,7 +32,7 @@ def main():
                 if f_dist_e>=5:
                     print("- Reverse-comp")
                     check_barcode(read_end, rev_comp(primer_r))
-                print("-- Reverse strand")
+                print("-- Lagging strand")
                 r_dist_s = check_barcode(read_start, rev_comp(primer_r))
                 if r_dist_s>=5:
                     print("- Reverse-comp")
