@@ -15,7 +15,7 @@ def main():
             if line[0]=='@':
                 read_next_line = True
             elif read_next_line:
-                print(line)
+                check_barcode(line)
                 read_next_line = False
 
 
@@ -30,5 +30,11 @@ def get_arguments():
         print("Input file(s): {}".format(args.input))
         print("Verbosity: {}".format(args.verbosity))
     return args
+
+def check_barcode(read):
+    start_seq = read[:100]
+    end_seq = read[-100:-1] #-1 due to newline character as last character of read
+    print(start_seq)
+    print(end_seq)
 
 main()
