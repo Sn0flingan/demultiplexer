@@ -18,10 +18,29 @@ def main():
             if line[0]=='@':
                 read_next_line = True
             elif read_next_line:
-                read_start = line[:100]
-                check_barcode(read_start, primer_f)
-                read_end = line[-100:-1] #-1 due to newline character as last character of read
-                check_barcode(read_end, primer_r)
+                read_start = line[:150]
+                read_end = line[-150:-1] #-1 due to newline character as last character of read
+                #Forward strand
+                print("--- Read ---")
+                print("Sequence len: {}".format(len(line)))
+                print("-- Forward strand")
+                f_dist_s = check_barcode(read_start, primer_f)
+                if f_dist_s>=5:
+                    print("- Reverse-comp")
+                    check_barcode(read_start, rev_comp(primer_f))
+                f_dist_e = check_barcode(read_end, primer_r)
+                if f_dist_e>=5:
+                    print("- Reverse-comp")
+                    check_barcode(read_end, rev_comp(primer_r))
+                print("-- Reverse strand")
+                r_dist_s = check_barcode(read_start, rev_comp(primer_r))
+                if r_dist_s>=5:
+                    print("- Reverse-comp")
+                    check_barcode(read_start, primer_r)
+                r_dist_e = check_barcode(read_end, rev_comp(primer_f))
+                if r_dist_e>=5:
+                    print("- Reverse-comp")
+                    check_barcode(read_end, primer_f)
                 read_next_line = False
 
 
@@ -46,7 +65,13 @@ def check_barcode(sequence, primer):
             best_match_idx = i
             min_dist = seq_dist
     coloured_match = '\x1b[6;31;48m' + sequence[best_match_idx:best_match_idx+len(primer)] + '\x1b[0m'
-    print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
+    #print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
     print("Distance : {}".format(min_dist))
+    return min_dist
+
+def rev_comp(seq):
+    complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
+    rev_comp_seq = "".join(complement.get(base,base) for base in reversed(seq))
+    return rev_comp_seq
 
 main()
