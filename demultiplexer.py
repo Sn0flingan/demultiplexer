@@ -9,6 +9,15 @@ import argparse
 
 def main():
     args = get_arguments()
+    with open(args.input) as file:
+        read_next_line = False
+        for line in file:
+            if line[0]=='@':
+                read_next_line = True
+            elif read_next_line:
+                print(line)
+                read_next_line = False
+
 
 def get_arguments():
     parser = argparse.ArgumentParser()
