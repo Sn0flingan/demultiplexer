@@ -24,11 +24,11 @@ def main():
                 print("--- Read ---")
                 print("Sequence len: {}".format(len(line)))
                 print("-- Leading strand")
-                f_dist_s = check_barcode(read_start, primer_f)
-                f_dist_e = check_barcode(read_end, primer_r)
+                f_dist_s = check_barcode(read_start, primer_f, args.verbosity)
+                f_dist_e = check_barcode(read_end, primer_r, args.verbosity)
                 print("-- Lagging strand")
-                r_dist_s = check_barcode(read_start, rev_comp(primer_r))
-                r_dist_e = check_barcode(read_end, rev_comp(primer_f))
+                r_dist_s = check_barcode(read_start, rev_comp(primer_r), args.verbosity)
+                r_dist_e = check_barcode(read_end, rev_comp(primer_f), args.verbosity)
                 read_next_line = False
 
 
@@ -44,7 +44,7 @@ def get_arguments():
         print("Verbosity: {}".format(args.verbosity))
     return args
 
-def check_barcode(sequence, primer):
+def check_barcode(sequence, primer, verbosity):
     min_dist = len(sequence)
     best_match_idx = 0
     for i in range(0,len(sequence)-len(primer)):
@@ -53,7 +53,8 @@ def check_barcode(sequence, primer):
             best_match_idx = i
             min_dist = seq_dist
     coloured_match = '\x1b[6;31;48m' + sequence[best_match_idx:best_match_idx+len(primer)] + '\x1b[0m'
-    #print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
+    if verbosity>=2:
+        print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
     print("Distance : {}".format(min_dist))
     return min_dist
 
