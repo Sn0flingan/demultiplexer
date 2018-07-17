@@ -20,6 +20,7 @@ def main():
                 rev_comp('AAGTAGGGGTCAGCTC'),
                 rev_comp('AATCGCATCAAGCGGG'),
                 rev_comp('ACCCACATGATATTCC')] #Last four rev comp for lagging strand
+    Barcode_matches = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 100:0}
     with open(args.input) as file:
         read_next_line = False
         for line in file:
@@ -39,7 +40,8 @@ def main():
                     (start_pos, end_pos, barcode_idx) = get_primer_pos(cand_barcode, barcodes, 2)
                 else:
                     cand_barcode = None
-                print("Barcode idx {}".format(barcode_idx+1))
+                print("Barcode idx {}".format(barcode_idx))
+                Barcode_matches[barcode_idx] += 1
                 print("-- End of read")
                 barcode_idx = 100
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
@@ -48,8 +50,11 @@ def main():
                     (start_pos, end_pos, barcode_idx) = get_primer_pos(cand_barcode, barcodes, 2)
                 else:
                     cand_barcode = None
-                print("Barcode idx {}".format(barcode_idx+1))
+                print("Barcode idx {}".format(barcode_idx))
+                Barcode_matches[barcode_idx] += 1
                 read_next_line = False
+    print("--- Demultiplex summary ---")
+    print(Barcode_matches)
 
 
 def get_arguments():
@@ -70,7 +75,7 @@ def get_primer_pos(seq, primers, verbosity):
     match_idx = (None, None, 100)
     for i in range(len(primers)):
         (dist, idx) = match_primer(seq, primers[i], verbosity)
-        if dist<=4 and dist<min_dist:
+        if dist<=7 and dist<min_dist:
             match_idx = (idx, idx+len(primers[i]), i+1)
             min_dist=dist
     return match_idx
