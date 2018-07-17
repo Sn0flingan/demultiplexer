@@ -24,11 +24,11 @@ def main():
                 print("--- Read ---")
                 print("Sequence len: {}".format(len(line)))
                 print("-- Start of read")
-                min_dist = get_barcode(read_start, [primer_f, primer_r], args.verbosity)
-                print("Min dist: {}".format(min_dist))
+                idx = get_barcode(read_start, [primer_f, primer_r], args.verbosity)
+                print("Idx of match: {}".format(idx))
                 print("-- End of read")
-                min_dist = get_barcode(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
-                print("Min dist: {}".format(min_dist))
+                idx = get_barcode(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
+                print("Idx of match: {}".format(idx))
                 read_next_line = False
 
 
@@ -47,11 +47,13 @@ def get_arguments():
 
 def get_barcode(seq, primers, verbosity):
     min_dist = len(primers[0])
+    match_idx = None
     for primer in primers:
-        dist = match_primer(seq, primer, verbosity)
+        (dist, idx) = match_primer(seq, primer, verbosity)
         if dist<=4 and dist<min_dist:
+            match_idx = idx
             min_dist=dist
-    return min_dist
+    return match_idx
 
 def match_primer(sequence, primer, verbosity):
     min_dist = len(sequence)
@@ -66,7 +68,7 @@ def match_primer(sequence, primer, verbosity):
         print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
     if verbosity>=1:
         print("Distance : {}".format(min_dist))
-    return min_dist
+    return min_dist, best_match_idx
 
 def rev_comp(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
