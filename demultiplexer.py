@@ -55,7 +55,8 @@ def check_barcode(sequence, primer, verbosity):
     coloured_match = '\x1b[6;31;48m' + sequence[best_match_idx:best_match_idx+len(primer)] + '\x1b[0m'
     if verbosity>=2:
         print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
-    print("Distance : {}".format(min_dist))
+    if verbosity>=1:
+        print("Distance : {}".format(min_dist))
     return min_dist
 
 def rev_comp(seq):
