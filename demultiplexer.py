@@ -8,13 +8,14 @@
 import argparse
 from Levenshtein import distance
 import seaborn as sns
+import matplotlib.pyplot as plt
 
 def main():
     args = get_arguments()
     primer_f = "TTGATTACGTCCCTGCCCTTT"
     primer_r = "CCTTAGTAACGGCGAGTGAAA" #reverse compliment of reverse primer
     matches = {'Leading':{'Both':0, 'Start':0, 'End':0}, 'Lagging': {'Both':0, 'Start':0, 'End':0}, 'None': 0}
-    index = {'Matching-start': [], 'Matching-end': [] }
+    index = {'Matching-start': [], 'Matching-end-rev': [], 'Matching-end-for': [] }
     with open(args.input) as file:
         read_next_line = False
         for line in file:
@@ -32,32 +33,33 @@ def main():
                 print("-- Lagging strand")
                 (r_dist_s, r_idx_s) = check_barcode(read_start, rev_comp(primer_r))
                 (r_dist_e, r_idx_e) = check_barcode(read_end, rev_comp(primer_f))
-                if f_dist_s<=7 and f_dist_e<=7:
+                if f_dist_s<=4 and f_dist_e<=4:
                     matches['Leading']['Both'] +=1
                     index['Matching-start'].append(f_idx_s)
-                    index['Matching-end'].append(f_idx_e)
-                elif r_dist_s<=7 and r_dist_e<=7:
+                    index['Matching-end-for'].append(f_idx_e)
+                elif r_dist_s<=4 and r_dist_e<=4:
                     matches['Lagging']['Both'] +=1
                     index['Matching-start'].append(r_idx_s)
-                    index['Matching-end'].append(r_idx_e)
-                elif f_dist_s<=7 and f_dist_e>7:
+                    index['Matching-end-rev'].append(r_idx_e)
+                elif f_dist_s<=4 and f_dist_e>4:
                     matches['Leading']['Start'] +=1
                     index['Matching-start'].append(f_idx_s)
-                elif f_dist_s>7 and f_dist_e<=7:
+                elif f_dist_s>4 and f_dist_e<=4:
                     matches['Leading']['End'] +=1
-                    index['Matching-end'].append(f_idx_e)
-                elif r_dist_s<=7 and r_dist_e>7:
+                    index['Matching-end-for'].append(f_idx_e)
+                elif r_dist_s<=4 and r_dist_e>4:
                     matches['Lagging']['Start'] +=1
                     index['Matching-start'].append(r_idx_s)
-                elif r_dist_s>7 and r_dist_e<=7:
+                elif r_dist_s>4 and r_dist_e<=4:
                     matches['Lagging']['End'] +=1
-                    index['Matching-end'].append(r_idx_e)
+                    index['Matching-end-rev'].append(r_idx_e)
                 else:
                     matches['None'] +=1
                 read_next_line = False
     print(matches)
     histogram_plot(index['Matching-start'], "Start")
-    histogram_plot(index['Matching-end'], "End")
+    histogram_plot(index['Matching-end-for'], "End_forward")
+    histogram_plot(index['Matching-end-rev'], "End_reverse")
     #print(sorted(index['Matching']))
 
 
@@ -93,8 +95,10 @@ def rev_comp(seq):
     return rev_comp_seq
 
 def histogram_plot(list, name):
-    sns.set(style="whitegrid")
-    plot = sns.distplot(list, kde=False, color="b")
-    fig = plot.get_figure()
-    fig.savefig(name + "_histogram.png")
+    #sns.set(style="whitegrid")
+    plt.figure()
+    plot = sns.distplot(list).set_title(name)
+    plt.savefig(name + "_histogram.png")
+    #fig.savefig(name + "_histogram.png")
+
 main()
