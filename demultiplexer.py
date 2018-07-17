@@ -20,7 +20,7 @@ def main():
                 rev_comp('AAGTAGGGGTCAGCTC'),
                 rev_comp('AATCGCATCAAGCGGG'),
                 rev_comp('ACCCACATGATATTCC')] #Last four rev comp for lagging strand
-    Barcode_matches = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 100:0}
+    barcode_matches = {}
     with open(args.input) as file:
         read_next_line = False
         for line in file:
@@ -32,29 +32,47 @@ def main():
                 #Forward strand
                 print("--- Read ---")
                 print("Sequence len: {}".format(len(line)))
+
                 print("-- Start of read")
-                barcode_idx = 100
+                barcode_idx_s = 100
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, primer_r], args.verbosity)
                 if start_pos is not None and (start_pos-17)>=0:
                     cand_barcode = read_start[start_pos-17:start_pos+5]
-                    (start_pos, end_pos, barcode_idx) = get_primer_pos(cand_barcode, barcodes, 2)
+                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 2)
                 else:
                     cand_barcode = None
-                print("Barcode idx {}".format(barcode_idx))
-                Barcode_matches[barcode_idx] += 1
+                print("Barcode idx {}".format(barcode_idx_s))
+
                 print("-- End of read")
                 barcode_idx = 100
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
                 if end_pos is not None:
                     cand_barcode = read_end[end_pos-5:end_pos+17]
-                    (start_pos, end_pos, barcode_idx) = get_primer_pos(cand_barcode, barcodes, 2)
+                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 2)
                 else:
                     cand_barcode = None
-                print("Barcode idx {}".format(barcode_idx))
-                Barcode_matches[barcode_idx] += 1
+                print("Barcode idx {}".format(barcode_idx_e))
+
+                barcode_name = None
+                if barcode_idx_s==100 and barcode_idx_e==100:
+                    barcode_name = 'None'
+                elif barcode_idx_s==100:
+                    barcode_name = 'BC_' + str(barcode_idx_e%4)
+                elif barcode_idx_e==100:
+                    barcode_name = 'BC_' + str(barcode_idx_s%4)
+                else:
+                    barcode_name = 'BC_' + str(barcode_idx_s%4) + '-' + 'BC_' + str(barcode_idx_e%4)
+
+                if barcode_name in barcode_matches:
+                    barcode_matches[barcode_name] +=1
+                else:
+                    barcode_matches[barcode_name] = 1
+
+
                 read_next_line = False
     print("--- Demultiplex summary ---")
-    print(Barcode_matches)
+    for b, c in barcode_matches.items():
+        print("{}: {}".format(b, c))
 
 
 def get_arguments():
