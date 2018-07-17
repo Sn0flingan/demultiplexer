@@ -24,11 +24,19 @@ def main():
                 print("--- Read ---")
                 print("Sequence len: {}".format(len(line)))
                 print("-- Start of read")
-                idx = get_barcode(read_start, [primer_f, primer_r], args.verbosity)
-                print("Idx of match: {}".format(idx))
+                (start_pos, end_pos) = get_primer_pos(read_start, [primer_f, primer_r], args.verbosity)
+                if start_pos is not None and (start_pos-17)>=0:
+                    cand_barcode = read_start[start_pos-17:start_pos+5]
+                else:
+                    cand_barcode = None
+                print("Candidate barcode {}".format(cand_barcode))
                 print("-- End of read")
-                idx = get_barcode(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
-                print("Idx of match: {}".format(idx))
+                (start_pos, end_pos) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
+                if end_pos is not None:
+                    cand_barcode = read_end[end_pos-5:end_pos+17]
+                else:
+                    cand_barcode = None
+                print("Candidate barcode {}".format(cand_barcode))
                 read_next_line = False
 
 
@@ -45,13 +53,13 @@ def get_arguments():
     return args
 
 
-def get_barcode(seq, primers, verbosity):
+def get_primer_pos(seq, primers, verbosity):
     min_dist = len(primers[0])
-    match_idx = None
+    match_idx = (None, None)
     for primer in primers:
         (dist, idx) = match_primer(seq, primer, verbosity)
         if dist<=4 and dist<min_dist:
-            match_idx = idx
+            match_idx = (idx, idx+len(primer))
             min_dist=dist
     return match_idx
 
@@ -65,9 +73,8 @@ def match_primer(sequence, primer, verbosity):
             min_dist = seq_dist
     coloured_match = '\x1b[6;31;48m' + sequence[best_match_idx:best_match_idx+len(primer)] + '\x1b[0m'
     if verbosity>=2:
-        print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
-    if verbosity>=1:
         print("Distance : {}".format(min_dist))
+        print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
     return min_dist, best_match_idx
 
 def rev_comp(seq):
