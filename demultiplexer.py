@@ -60,6 +60,7 @@ def main():
     histogram_plot(index['Matching-start'], "Start")
     histogram_plot(index['Matching-end-for'], "End_forward")
     histogram_plot(index['Matching-end-rev'], "End_reverse")
+    print(len(index['Matching-end-for']) + len(index['Matching-end-rev']))
     #print(sorted(index['Matching']))
 
 
@@ -85,7 +86,9 @@ def check_barcode(sequence, primer):
             best_match_idx = i
             min_dist = seq_dist
     coloured_match = '\x1b[6;31;48m' + sequence[best_match_idx:best_match_idx+len(primer)] + '\x1b[0m'
-    #print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
+    print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
+    #if best_match_idx<60 and min_dist<=4:
+    #    print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
     print("Distance : {}".format(min_dist))
     return (min_dist, best_match_idx)
 
@@ -97,7 +100,7 @@ def rev_comp(seq):
 def histogram_plot(list, name):
     #sns.set(style="whitegrid")
     plt.figure()
-    plot = sns.distplot(list).set_title(name)
+    plot = sns.distplot(list, kde=False).set_title(name)
     plt.savefig(name + "_histogram.png")
     #fig.savefig(name + "_histogram.png")
 
