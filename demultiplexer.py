@@ -30,28 +30,28 @@ def main():
                 read_start = line[:150]
                 read_end = line[-150:-1] #-1 due to newline character as last character of read
                 #Forward strand
-                print("--- Read ---")
-                print("Sequence len: {}".format(len(line)))
+                #print("--- Read ---")
+                #print("Sequence len: {}".format(len(line)))
 
-                print("-- Start of read")
+                #print("-- Start of read")
                 barcode_idx_s = 100
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, primer_r], args.verbosity)
                 if start_pos is not None and (start_pos-17)>=0:
                     cand_barcode = read_start[start_pos-17:start_pos+5]
-                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 2)
+                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, args.verbosity)
                 else:
                     cand_barcode = None
-                print("Barcode idx {}".format(barcode_idx_s))
+                #print("Barcode idx {}".format(barcode_idx_s))
 
-                print("-- End of read")
+                #print("-- End of read")
                 barcode_idx = 100
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
                 if end_pos is not None:
                     cand_barcode = read_end[end_pos-5:end_pos+17]
-                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 2)
+                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, args.verbosity)
                 else:
                     cand_barcode = None
-                print("Barcode idx {}".format(barcode_idx_e))
+                #print("Barcode idx {}".format(barcode_idx_e))
 
                 barcode_name = None
                 if barcode_idx_s==100 and barcode_idx_e==100:
