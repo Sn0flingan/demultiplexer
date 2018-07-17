@@ -23,12 +23,12 @@ def main():
                 #Forward strand
                 print("--- Read ---")
                 print("Sequence len: {}".format(len(line)))
-                print("-- Leading strand")
-                f_dist_s = check_barcode(read_start, primer_f, args.verbosity)
-                f_dist_e = check_barcode(read_end, primer_r, args.verbosity)
-                print("-- Lagging strand")
-                r_dist_s = check_barcode(read_start, rev_comp(primer_r), args.verbosity)
-                r_dist_e = check_barcode(read_end, rev_comp(primer_f), args.verbosity)
+                print("-- Start of read")
+                min_dist = get_barcode(read_start, [primer_f, primer_r], args.verbosity)
+                print("Min dist: {}".format(min_dist))
+                print("-- End of read")
+                min_dist = get_barcode(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
+                print("Min dist: {}".format(min_dist))
                 read_next_line = False
 
 
@@ -44,7 +44,16 @@ def get_arguments():
         print("Verbosity: {}".format(args.verbosity))
     return args
 
-def check_barcode(sequence, primer, verbosity):
+
+def get_barcode(seq, primers, verbosity):
+    min_dist = len(primers[0])
+    for primer in primers:
+        dist = match_primer(seq, primer, verbosity)
+        if dist<=4 and dist<min_dist:
+            min_dist=dist
+    return min_dist
+
+def match_primer(sequence, primer, verbosity):
     min_dist = len(sequence)
     best_match_idx = 0
     for i in range(0,len(sequence)-len(primer)):
