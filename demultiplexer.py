@@ -35,20 +35,20 @@ def main():
 
                 #print("-- Start of read")
                 barcode_idx_s = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, primer_r], args.verbosity)
+                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, primer_r], 7, args.verbosity)
                 if start_pos is not None and (start_pos-17)>=0:
                     cand_barcode = read_start[start_pos-17:start_pos+5]
-                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, args.verbosity)
+                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 2, args.verbosity)
                 else:
                     cand_barcode = None
                 #print("Barcode idx {}".format(barcode_idx_s))
 
                 #print("-- End of read")
                 barcode_idx = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], args.verbosity)
+                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 7, args.verbosity)
                 if end_pos is not None:
                     cand_barcode = read_end[end_pos-5:end_pos+17]
-                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, args.verbosity)
+                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 2, args.verbosity)
                 else:
                     cand_barcode = None
                 #print("Barcode idx {}".format(barcode_idx_e))
@@ -88,12 +88,12 @@ def get_arguments():
     return args
 
 
-def get_primer_pos(seq, primers, verbosity):
+def get_primer_pos(seq, primers, dist_thresh, verbosity):
     min_dist = len(primers[0])
     match_idx = (None, None, 100)
     for i in range(len(primers)):
         (dist, idx) = match_primer(seq, primers[i], verbosity)
-        if dist<=7 and dist<min_dist:
+        if dist<=dist_thresh and dist<min_dist:
             match_idx = (idx, idx+len(primers[i]), i+1)
             min_dist=dist
     return match_idx
