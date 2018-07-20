@@ -38,7 +38,7 @@ def main():
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, rev_comp(primer_r)], 9, args.verbosity)
                 if start_pos is not None and (start_pos-21)>=0:
                     cand_barcode = read_start[start_pos-21:start_pos+5]
-                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 6, args.verbosity)
+                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 4, args.verbosity)
                 else:
                     cand_barcode = None
                 #print("Barcode idx {}".format(barcode_idx_s))
@@ -48,7 +48,7 @@ def main():
                 (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 9, args.verbosity)
                 if end_pos is not None:
                     cand_barcode = read_end[end_pos-5:end_pos+21]
-                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 6, args.verbosity)
+                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 4, args.verbosity)
                 else:
                     cand_barcode = None
                 #print("Barcode idx {}".format(barcode_idx_e))
@@ -57,12 +57,23 @@ def main():
                 if barcode_idx_s==100 and barcode_idx_e==100:
                     barcode_name = 'None'
                 elif barcode_idx_s==100:
-                    barcode_name = 'BC_' + str(barcode_idx_e%4)
+                    if barcode_idx_e>4:
+                        barcode_name ='BC_s' + str(barcode_idx_e-4)
+                    else:
+                        barcode_name = 'BC_e' + str(barcode_idx_e)
                 elif barcode_idx_e==100:
-                    barcode_name = 'BC_' + str(barcode_idx_s%4)
+                    if barcode_idx_s>4:
+                        barcode_name = 'BC_e' + str(barcode_idx_s-4)
+                    else:
+                        barcode_name = 'BC_s' + str(barcode_idx_s)
                 else:
-                    barcode_name = 'BC_' + str(barcode_idx_s%4) + '-' + 'BC_' + str(barcode_idx_e%4)
-
+                    if barcode_idx_s>4 and barcode_idx_e>4:
+                        barcode_name = 'BC_' + str(barcode_idx_e-4) + '-' + 'BC_' + str(barcode_idx_s-4)
+                    elif barcode_idx_s<=4 and barcode_idx_e<=4:
+                        barcode_name = 'BC_' + str(barcode_idx_s) + '-' + 'BC_' + str(barcode_idx_e)
+                    else:
+                        barcode_name = 'Conflicting'
+                    
                 if barcode_name in barcode_matches:
                     barcode_matches[barcode_name] +=1
                 else:
