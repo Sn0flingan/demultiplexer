@@ -11,7 +11,7 @@ from Levenshtein import distance
 def main():
     args = get_arguments()
     primer_f = "TTGATTACGTCCCTGCCCTTT"
-    primer_r = "CCTTAGTAACGGCGAGTGAAA" #reverse compliment of reverse primer
+    primer_r = "TTTCACTCGCCGTTACTAAGG" #both 5' to 3' sequences 'as ordered'
     barcodes = ['AACCACTGGATGGAAA',
                 'AAGTAGGGGTCAGCTC',
                 'AATCGCATCAAGCGGG',
@@ -35,20 +35,20 @@ def main():
 
                 #print("-- Start of read")
                 barcode_idx_s = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, primer_r], 7, args.verbosity)
-                if start_pos is not None and (start_pos-17)>=0:
-                    cand_barcode = read_start[start_pos-17:start_pos+5]
-                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 2, args.verbosity)
+                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, rev_comp(primer_r)], 9, args.verbosity)
+                if start_pos is not None and (start_pos-21)>=0:
+                    cand_barcode = read_start[start_pos-21:start_pos+5]
+                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 6, args.verbosity)
                 else:
                     cand_barcode = None
                 #print("Barcode idx {}".format(barcode_idx_s))
 
                 #print("-- End of read")
-                barcode_idx = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 7, args.verbosity)
+                barcode_idx_e = 100
+                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 9, args.verbosity)
                 if end_pos is not None:
-                    cand_barcode = read_end[end_pos-5:end_pos+17]
-                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 2, args.verbosity)
+                    cand_barcode = read_end[end_pos-5:end_pos+21]
+                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 6, args.verbosity)
                 else:
                     cand_barcode = None
                 #print("Barcode idx {}".format(barcode_idx_e))
