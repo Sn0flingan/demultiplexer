@@ -12,6 +12,10 @@ def main():
     args = get_arguments()
     primer_f = "TTGATTACGTCCCTGCCCTTT"
     primer_r = "TTTCACTCGCCGTTACTAAGG" #both 5' to 3' sequences 'as ordered'
+    barcodes = get_barcodes("barcodes.csv")
+    for bc in barcodes:
+        print(bc)
+    return
     barcodes = ['AACCACTGGATGGAAA',
                 'AAGTAGGGGTCAGCTC',
                 'AATCGCATCAAGCGGG',
@@ -127,5 +131,43 @@ def rev_comp(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
     rev_comp_seq = "".join(complement.get(base,base) for base in reversed(seq))
     return rev_comp_seq
+
+def get_barcodes(file):
+    barcodes = []
+    with open(file) as file:
+        for row in file:
+            columns = row.split(';')
+            if len(columns)==2:
+                barcode = Barcode(name=columns[0], start_name=columns[0],
+                                  start_seq=columns[1].rstrip())
+            else:
+                barcode = Barcode(name=columns[0],
+                                  start_name=columns[1], start_seq=columns[2],
+                                  end_name=columns[3], end_seq=columns[4].rstrip())
+            #print("Name: {}".format(columns[0]))
+            barcodes.append(barcode)
+    return barcodes
+
+class Barcode():
+    def __init__(self, name, start_name="", start_seq="", end_name="", end_seq=""):
+        self.name = name
+        self.start_name = start_name
+        self.start_seq = start_seq.upper()
+        if not end_name:
+            self.isDual = False
+            self.end_name = start_name
+            self.end_seq = start_seq.upper()
+        else:
+            self.isDual = True
+            self.end_name = end_name
+            self.end_seq = end_seq.upper()
+
+    def __str__(self):
+        n = "Name: {}\n".format(self.name)
+        sn = "Start name: {}\n".format(self.start_name)
+        ss = "Start seq: {}\n".format(self.start_seq)
+        en = "End name: {}\n".format(self.end_name)
+        es = "End seq: {}\n".format(self.end_seq)
+        return n + sn + ss + en + es
 
 main()
