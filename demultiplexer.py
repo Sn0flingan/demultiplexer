@@ -12,7 +12,7 @@ def main():
     args = get_arguments()
     primer_f = "TTGATTACGTCCCTGCCCTTT"
     primer_r = "TTTCACTCGCCGTTACTAAGG" #both 5' to 3' sequences 'as ordered'
-    barcodes = get_barcodes("barcodes.csv")
+    barcodes = get_barcodes(args.barcodes)
     for bc in barcodes:
         print(bc)
     return
@@ -93,6 +93,8 @@ def main():
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input", help="Input read files in fastq format")
+    parser.add_argument("-b", "--barcodes", help="Barcode file in .csv format, each line one barcode pair. \
+                        Singleplex: Name;Seq   Dualplex: Name;Name-for;Seq-for;Name-rev;Seq-rev")
     parser.add_argument("-v", "--verbosity", help="Level of output while running (0 - no output)",
                         default=1, type=int)
     args = parser.parse_args()
