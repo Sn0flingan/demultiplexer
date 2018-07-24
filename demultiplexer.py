@@ -13,17 +13,8 @@ def main():
     primer_f = "TTGATTACGTCCCTGCCCTTT"
     primer_r = "TTTCACTCGCCGTTACTAAGG" #both 5' to 3' sequences 'as ordered'
     barcodes = get_barcodes(args.barcodes)
-    for bc in barcodes:
-        print(bc)
-    return
-    barcodes = ['AACCACTGGATGGAAA',
-                'AAGTAGGGGTCAGCTC',
-                'AATCGCATCAAGCGGG',
-                'ACCCACATGATATTCC',
-                rev_comp('AACCACTGGATGGAAA'),
-                rev_comp('AAGTAGGGGTCAGCTC'),
-                rev_comp('AATCGCATCAAGCGGG'),
-                rev_comp('ACCCACATGATATTCC')] #Last four rev comp for lagging strand
+    dist_thresh = 15
+
     barcode_matches = {}
     with open(args.input) as file:
         read_next_line = False
@@ -31,60 +22,17 @@ def main():
             if line[0]=='@':
                 read_next_line = True
             elif read_next_line:
-                read_start = line[:150]
-                read_end = line[-150:-1] #-1 due to newline character as last character of read
-                #Forward strand
-                #print("--- Read ---")
-                #print("Sequence len: {}".format(len(line)))
-
-                #print("-- Start of read")
-                barcode_idx_s = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, rev_comp(primer_r)], 9, args.verbosity)
-                if start_pos is not None and (start_pos-21)>=0:
-                    cand_barcode = read_start[start_pos-21:start_pos+5]
-                    (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 4, args.verbosity)
-                else:
-                    cand_barcode = None
-                #print("Barcode idx {}".format(barcode_idx_s))
-
-                #print("-- End of read")
-                barcode_idx_e = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 9, args.verbosity)
-                if end_pos is not None:
-                    cand_barcode = read_end[end_pos-5:end_pos+21]
-                    (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 4, args.verbosity)
-                else:
-                    cand_barcode = None
-                #print("Barcode idx {}".format(barcode_idx_e))
-
-                barcode_name = None
-                if barcode_idx_s==100 and barcode_idx_e==100:
-                    barcode_name = 'None'
-                elif barcode_idx_s==100:
-                    if barcode_idx_e>4:
-                        barcode_name ='BC_s' + str(barcode_idx_e-4)
-                    else:
-                        barcode_name = 'BC_e' + str(barcode_idx_e)
-                elif barcode_idx_e==100:
-                    if barcode_idx_s>4:
-                        barcode_name = 'BC_e' + str(barcode_idx_s-4)
-                    else:
-                        barcode_name = 'BC_s' + str(barcode_idx_s)
-                else:
-                    if barcode_idx_s>4 and barcode_idx_e>4:
-                        barcode_name = 'BC_' + str(barcode_idx_e-4) + '-' + 'BC_' + str(barcode_idx_s-4)
-                    elif barcode_idx_s<=4 and barcode_idx_e<=4:
-                        barcode_name = 'BC_' + str(barcode_idx_s) + '-' + 'BC_' + str(barcode_idx_e)
-                    else:
-                        barcode_name = 'Conflicting'
+                tags = get_tags(line, [primer_f, rev_comp(primer_r)], dist_thresh, args.verbosity)
+                
+                matching_barcode = match_barcode(tags, barcodes)
                     
-                if barcode_name in barcode_matches:
-                    barcode_matches[barcode_name] +=1
+                if matching_barcode in barcode_matches:
+                    barcode_matches[matching_barcode] +=1
                 else:
-                    barcode_matches[barcode_name] = 1
-
-
+                    barcode_matches[matching_barcode] = 1
+                
                 read_next_line = False
+
     print("--- Demultiplex summary ---")
     for b, c in barcode_matches.items():
         print("{}: {}".format(b, c))
@@ -104,23 +52,36 @@ def get_arguments():
         print("Verbosity: {}".format(args.verbosity))
     return args
 
+def get_tags(read, primers, dist_thresh, verbosity):
+    read_start = read[:150]
+    read_end = read[-151:-1]
+    #leading strand
+    (s_dist, s_idx) = match_primer(read_start, primers[0], dist_thresh, verbosity) #start of read
+    (e_dist, e_idx) = match_primer(read_end, primers[1], dist_thresh, verbosity) #end of read
+    #lagging strand
+    (rc_s_dist, rc_s_idx) = match_primer(read_start, rev_comp(primers[1]), dist_thresh, verbosity) #start of read
+    (rc_e_dist, rc_e_idx) = match_primer(read_end, rev_comp(primers[0]), dist_thresh, verbosity) #end of read
+    
+    read_is_lagging = (rc_s_dist + rc_e_dist)<(s_dist + e_dist) #might need more sophisticated method
+    tags = ["Primer not found"]*2
+    if read_is_lagging:
+        if rc_s_idx and (rc_s_idx-21)>=0:
+            tags[1] = rev_comp(read_start[rc_s_idx-21:rc_s_idx+5]) #reverse order and rev_comp to adjust lagging to leading
+        if rc_e_idx:
+            tags[0] = rev_comp(read_end[rc_e_idx-5:rc_e_idx+21])
+    else:
+        if s_idx and (rc_s_idx-21)>=0:
+            tags[0] = read_start[s_idx-21:s_idx+5]
+        if e_idx:
+            tags[1] = read_end[e_idx-5:e_idx+21]
+    return tags
 
-def get_primer_pos(seq, primers, dist_thresh, verbosity):
-    min_dist = len(primers[0])
-    match_idx = (None, None, 100)
-    for i in range(len(primers)):
-        (dist, idx) = match_primer(seq, primers[i], verbosity)
-        if dist<=dist_thresh and dist<min_dist:
-            match_idx = (idx, idx+len(primers[i]), i+1)
-            min_dist=dist
-    return match_idx
-
-def match_primer(sequence, primer, verbosity):
+def match_primer(sequence, primer, dist_thresh, verbosity):
     min_dist = len(sequence)
     best_match_idx = 0
     for i in range(0,len(sequence)-len(primer)):
         seq_dist = distance(sequence[i:i+len(primer)],primer)
-        if seq_dist<min_dist:
+        if seq_dist<min_dist and seq_dist<dist_thresh:
             best_match_idx = i
             min_dist = seq_dist
     coloured_match = '\x1b[6;31;48m' + sequence[best_match_idx:best_match_idx+len(primer)] + '\x1b[0m'
@@ -128,6 +89,40 @@ def match_primer(sequence, primer, verbosity):
         print("Distance : {}".format(min_dist))
         print(sequence[:best_match_idx] + coloured_match + sequence[best_match_idx+len(primer):] )
     return min_dist, best_match_idx,
+
+def match_barcode(tags, barcodes):
+    min_dist = 1000
+    matching_barcode = "None"
+    dist_thresh = 7
+    verbosity = 1
+
+    for i in range(0, len(barcodes)):
+        if tags[0]=="Primer not found":
+            s_dist = 100
+        else:
+            (s_dist, s_pos) = match_primer(tags[0], barcodes[i].start_seq, dist_thresh, verbosity)
+        if tags[1]=="Primer not found":
+            e_dist = 100
+        else:
+            (e_dist, e_pos) = match_primer(tags[1], barcodes[i].end_seq, dist_thresh, verbosity)
+
+        if (s_dist+e_dist)==200:
+            matching_barcode = "Primers not found"
+            break;
+        elif (s_dist+e_dist)<min_dist:
+            min_dist = (s_dist+e_dist)
+            matching_barcode = barcodes[i].name
+                
+    if 52>min_dist>=26:
+        matching_barcode = matching_barcode + " single(b)"
+    elif min_dist==52:
+        matching_barcode = "Barcodes not found"
+    elif 200>min_dist>=100:
+        matching_barcode = matching_barcode + " single(p)"
+
+    return matching_barcode
+
+
 
 def rev_comp(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
@@ -146,7 +141,6 @@ def get_barcodes(file):
                 barcode = Barcode(name=columns[0],
                                   start_name=columns[1], start_seq=columns[2],
                                   end_name=columns[3], end_seq=columns[4].rstrip())
-            #print("Name: {}".format(columns[0]))
             barcodes.append(barcode)
     return barcodes
 
