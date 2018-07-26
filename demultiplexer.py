@@ -21,6 +21,7 @@ def main():
                 rev_comp('AATCGCATCAAGCGGG'),
                 rev_comp('ACCCACATGATATTCC')] #Last four rev comp for lagging strand
     barcode_matches = {}
+    count_missmatch = {}
     with open(args.input) as file:
         read_next_line = False
         for line in file:
@@ -35,22 +36,37 @@ def main():
 
                 #print("-- Start of read")
                 barcode_idx_s = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, rev_comp(primer_r)], 9, args.verbosity)
-                if start_pos is not None and (start_pos-21)>=0:
-                    cand_barcode = read_start[start_pos-21:start_pos+5]
+                (start_pos, end_pos, primer_idx) = get_primer_pos(read_start, [primer_f, rev_comp(primer_r)], 6, args.verbosity)
+                primer_match = 'start_{}'.format(primer_idx)
+                if start_pos is not None:
+                    if (start_pos-21)>=0:
+                        cand_barcode = read_start[start_pos-21:start_pos+5]
+                    else:
+                        cand_barcode = read_start[0:start_pos+5]
                     (start_pos, end_pos, barcode_idx_s) = get_primer_pos(cand_barcode, barcodes, 6, args.verbosity)
                 else:
                     cand_barcode = None
+                
+                if primer_match in count_missmatch:
+                    count_missmatch[primer_match] +=1
+                else:
+                    count_missmatch[primer_match] = 1
                 #print("Barcode idx {}".format(barcode_idx_s))
 
                 #print("-- End of read")
                 barcode_idx_e = 100
-                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 9, args.verbosity)
+                (start_pos, end_pos, primer_idx) = get_primer_pos(read_end, [primer_r, rev_comp(primer_f)], 6, args.verbosity)
+                primer_match = 'end_{}'.format(primer_idx)
                 if end_pos is not None:
                     cand_barcode = read_end[end_pos-5:end_pos+21]
                     (start_pos, end_pos, barcode_idx_e) = get_primer_pos(cand_barcode, barcodes, 6, args.verbosity)
                 else:
                     cand_barcode = None
+                
+                if primer_match in count_missmatch:
+                    count_missmatch[primer_match] +=1
+                else:
+                    count_missmatch[primer_match] = 1
                 #print("Barcode idx {}".format(barcode_idx_e))
 
                 barcode_name = None
@@ -73,6 +89,10 @@ def main():
     print("--- Demultiplex summary ---")
     for b, c in barcode_matches.items():
         print("{}: {}".format(b, c))
+    print("--- Primer summary ---")
+    for p, c in count_missmatch.items():
+        print("{}: {}".format(p, c))
+    #print("Missed primer start: {}".format(count_missmatch))
 
 
 def get_arguments():
